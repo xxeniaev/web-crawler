@@ -12,9 +12,11 @@ class HTMLPage:
 
     def __getLinks(self):
         """Поиск всех ссылок на странице, заключенных в тег <href>.
-        Достает ссылки начинающиеся ТОЛЬКО на https://, добавить потом поддержку http://."""
+        Достает ссылки начинающиеся ТОЛЬКО на https://,
+        добавить потом поддержку http://."""
         links = []
-        for link in self.__content.find_all('a', attrs={"href": re.compile("https://")}):
+        for link in self.__content.find_all(
+                'a', attrs={"href": re.compile("https://")}):
             links.append(link.get("href"))
         return links
 

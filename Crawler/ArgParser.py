@@ -11,4 +11,5 @@ class ArgParser(argparse.ArgumentParser):
         self.description = 'WebCrawler [OPTIONS] <START-URL>.\n\t' \
                            'Get all links recursively from web pages.\n\t'
 
-        self.add_argument("start_url", nargs='?', help="web page URL to start from")
+        self.add_argument("start_url", nargs='?', help="web page URL "
+                                                       "to start from")
