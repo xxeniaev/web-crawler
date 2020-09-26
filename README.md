@@ -1,5 +1,5 @@
 # web_crawler
-highlights mistakes in texts and corrects them.
+extracting data from websites.
 ## Getting Started
 just download the program from here :)
 ### Requirements
