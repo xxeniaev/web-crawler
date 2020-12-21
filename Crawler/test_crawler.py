@@ -4,6 +4,7 @@ import unittest
 import os
 
 html_page = HTMLPage('https://sitechecker.pro/website-crawler/', 1)
+html_page.scrape()
 
 
 class WebCrawlerTest(unittest.TestCase):
@@ -28,6 +29,5 @@ class WebCrawlerTest(unittest.TestCase):
 
     def test_scrape(self):
         filename = html_page.get_file_name()
-        html_page.scrape()
 
         self.assertTrue(os.path.exists(filename))

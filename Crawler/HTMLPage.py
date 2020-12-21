@@ -8,11 +8,12 @@ class HTMLPage:
     """Объект хтмл страницы"""
     def __init__(self, path: str, nesting: int):
         self.url = path
+        # вложенность
         self.__nesting = nesting
 
     def scrape(self):
         """Основной меотд поиска ссылок."""
-        if self.__nesting > 3:
+        if self.__nesting > 1:
             return
         filename = self.get_file_name()
         if not os.path.exists(filename):
