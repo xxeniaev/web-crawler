@@ -1,3 +1,4 @@
+import os
 import uuid
 import re
 import urllib.request
@@ -6,16 +7,17 @@ from bs4 import BeautifulSoup
 
 class HTMLPage:
     """Объект хтмл страницы"""
-    def __init__(self, path: str):
-        self.__content = self.__readPage(path)
-        self.__links = self.__getLinks()
+    def __init__(self, path: str, nesting):
+        self.__links = []
+        self.url = path
+        self.__nesting = nesting
 
-    def __getLinks(self):
+    def __getLinks(self, content):
         """Поиск всех ссылок на странице, заключенных в тег <href>.
         Достает ссылки начинающиеся ТОЛЬКО на https://,
         добавить потом поддержку http://."""
         links = []
-        for link in self.__content.find_all(
+        for link in content.find_all(
                 'a', attrs={"href": re.compile("https://")}):
             links.append(link.get("href"))
         return links
@@ -28,19 +30,27 @@ class HTMLPage:
         return soup
 
     @property
-    def content(self):
-        """Геттер. Выводит форматированный контент страницы."""
-        return self.__content.prettify()
-
-    @property
     def links(self):
         """Геттер. Возвращает все найденные ссылки на странице."""
         return self.__links
 
-    @classmethod
-    def fromURL(cls, url: str):
-        """'Фабрика классов', создает обьект стрницы по заданному url."""
-        filename = f"{uuid.uuid4()}.html"
-        # Скачиваем файл в текущую папку
-        urllib.request.urlretrieve(url, filename)
-        return cls(filename)
+    def scrape(self):
+        """Основной меотд поиска ссылок."""
+        if self.__nesting > 3:
+            return
+        filename = self.get_file_name()
+        if not os.path.exists(filename):
+            print(self.url, self.__nesting)
+            try:
+                print(filename)
+                urllib.request.urlretrieve(self.url, filename)
+                content = self.__readPage(filename)
+                links = self.__getLinks(content)
+                for link in links:
+                    html_page = HTMLPage(link, self.__nesting + 1)
+                    html_page.scrape()
+            except:
+                print('bad url')
+
+    def get_file_name(self):
+        return f"{self.url.replace('https://', '').replace('/', '_')}.html"
