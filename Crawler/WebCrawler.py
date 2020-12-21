@@ -6,7 +6,6 @@ class WebCrawler:
     """Парсинг аргументов, старт скрэппинга"""
     def __init__(self):
         self.__args = ArgParser().parse_args()
-        self.nesting = 3
 
     def start(self):
         html_page = HTMLPage(self.__args.start_url, 1)
