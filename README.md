@@ -19,8 +19,13 @@ python3 main.py https://sitechecker.pro/website-crawler/
   * `HTMLPage.py` parsing pages, getting links and html files, then scrapping
   * `WebCrawler.py` starting crawling
 ## Future versions
-- [ ] working with `robots.txt`
+- [x] tests
+- [x] download html to disk (do not download it again)
+- [x] get links using html.parse (bs4)
+- [x] working with `robots.txt` 
 - [ ] download in multipe streams (producer-consumer model)'
 - [ ] the ability to resume (store the state)
+- [x] links within the specified domains 
+- [x] don't use scrapy
 ## Authors
 * **Xenia Evdokimova** ([xxeniaev](https://github.com/xxeniaev))

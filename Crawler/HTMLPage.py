@@ -1,18 +1,60 @@
 import os
-import uuid
 import re
 import urllib.request
+
 from bs4 import BeautifulSoup
 
 
 class HTMLPage:
-    """Объект хтмл страницы"""
-    def __init__(self, path: str, nesting):
-        self.__links = []
-        self.url = path
-        self.__nesting = nesting
+    CONST = 2
 
-    def __getLinks(self, content):
+    """Объект хтмл страницы"""
+    def __init__(self, url: str, nesting: int, domain, rp):
+        self.url = url
+        # вложенность
+        self.__nesting = nesting
+        self.domain = domain
+        # self.able_to_scrape = IfAllowedToScrapeChecker(url, domain).is_allowed()
+        self.rp = rp
+
+    def scrape(self):
+        """Основной меотд поиска ссылок."""
+        if self.__nesting > self.CONST:
+            return
+        filename = self.get_file_name()
+        if not os.path.exists(filename):
+            print(self.url, self.__nesting)
+            # print(self.able_to_scrape)
+            try:
+                urllib.request.urlretrieve(self.url, filename)
+            except Exception:
+                print('bad url')
+        try:
+            content = self.read_page(filename)
+            links = self.get_links(content)
+            for link in links:
+                if self.domain in link:
+                    # print(self.domain, link, self.domain in link)
+                    if self.rp.can_fetch("*", link):
+                        html_page = HTMLPage(link, self.__nesting + 1,
+                                             self.domain, self.rp)
+                        html_page.scrape()
+                else:
+                    continue
+        except FileNotFoundError:
+            print('it was bad url')
+
+    def get_file_name(self):
+        return f"{self.url.replace('https://', '').replace('/', '_')}.html"
+
+    def read_page(self, path: str):
+        """Парсинг содержимого скачанной страницы"""
+        with open(path, "r", encoding="utf-8") as webpage:
+            source = webpage.read()
+            soup = BeautifulSoup(source, features="html.parser")
+        return soup
+
+    def get_links(self, content):
         """Поиск всех ссылок на странице, заключенных в тег <href>.
         Достает ссылки начинающиеся ТОЛЬКО на https://,
         добавить потом поддержку http://."""
@@ -20,37 +62,7 @@ class HTMLPage:
         for link in content.find_all(
                 'a', attrs={"href": re.compile("https://")}):
             links.append(link.get("href"))
+        for link in content.find_all(
+                'a', attrs={"href": re.compile("http://")}):
+            links.append(link.get("href"))
         return links
-
-    def __readPage(self, path: str):
-        """Парсинг содержимого скачанной страницы"""
-        with open(path, "r", encoding="utf-8") as webpage:
-            source = webpage.read()
-            soup = BeautifulSoup(source, features="html.parser")
-        return soup
-
-    @property
-    def links(self):
-        """Геттер. Возвращает все найденные ссылки на странице."""
-        return self.__links
-
-    def scrape(self):
-        """Основной меотд поиска ссылок."""
-        if self.__nesting > 3:
-            return
-        filename = self.get_file_name()
-        if not os.path.exists(filename):
-            print(self.url, self.__nesting)
-            try:
-                print(filename)
-                urllib.request.urlretrieve(self.url, filename)
-                content = self.__readPage(filename)
-                links = self.__getLinks(content)
-                for link in links:
-                    html_page = HTMLPage(link, self.__nesting + 1)
-                    html_page.scrape()
-            except:
-                print('bad url')
-
-    def get_file_name(self):
-        return f"{self.url.replace('https://', '').replace('/', '_')}.html"
