@@ -3,7 +3,9 @@ from .HTMLPage import HTMLPage
 import unittest
 import os
 
-html_page = HTMLPage('https://sitechecker.pro/website-crawler/', 1)
+
+html_page = HTMLPage('https://sitechecker.pro/website-crawler/', 1,
+                     'https://sitechecker.pro/')
 html_page.scrape()
 
 
