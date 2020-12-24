@@ -6,15 +6,14 @@ from bs4 import BeautifulSoup
 
 
 class HTMLPage:
-    CONST = 2
+    CONST = 1
 
-    """Объект хтмл страницы"""
+    """Объект html страницы"""
     def __init__(self, url: str, nesting: int, domain, rp):
         self.url = url
         # вложенность
         self.__nesting = nesting
         self.domain = domain
-        # self.able_to_scrape = IfAllowedToScrapeChecker(url, domain).is_allowed()
         self.rp = rp
 
     def scrape(self):
@@ -24,7 +23,6 @@ class HTMLPage:
         filename = self.get_file_name()
         if not os.path.exists(filename):
             print(self.url, self.__nesting)
-            # print(self.able_to_scrape)
             try:
                 urllib.request.urlretrieve(self.url, filename)
             except Exception:
@@ -34,7 +32,6 @@ class HTMLPage:
             links = self.get_links(content)
             for link in links:
                 if self.domain in link:
-                    # print(self.domain, link, self.domain in link)
                     if self.rp.can_fetch("*", link):
                         html_page = HTMLPage(link, self.__nesting + 1,
                                              self.domain, self.rp)
