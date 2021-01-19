@@ -1,12 +1,13 @@
 import os
 import re
 import urllib.request
+import settings
 
 from bs4 import BeautifulSoup
 
 
 class HTMLPage:
-    CONST = 1
+    CONST = 2
 
     """Объект html страницы"""
     def __init__(self, url: str, nesting: int, domain, rp):
@@ -17,8 +18,8 @@ class HTMLPage:
         self.rp = rp
 
     def scrape(self):
-        """Основной меотд поиска ссылок."""
-        if self.__nesting > self.CONST:
+        """Основной меотод поиска ссылок."""
+        if self.__nesting > settings.NESTING:
             return
         filename = self.get_file_name()
         if not os.path.exists(filename):
@@ -52,9 +53,7 @@ class HTMLPage:
         return soup
 
     def get_links(self, content):
-        """Поиск всех ссылок на странице, заключенных в тег <href>.
-        Достает ссылки начинающиеся ТОЛЬКО на https://,
-        добавить потом поддержку http://."""
+        """Поиск всех ссылок на странице, заключенных в тег <href>."""
         links = []
         for link in content.find_all(
                 'a', attrs={"href": re.compile("https://")}):
