@@ -6,8 +6,7 @@ import time
 from .ArgParser import ArgParser
 from .HTMLPage import HTMLPage
 
-import urllib.robotparser as urobot
-import urllib.request
+import urllib.robotparser as robot
 import threading
 from queue import Queue
 
@@ -28,7 +27,7 @@ class WebCrawler:
         self.start_url = ArgParser().parse_args().start_url
         self.domain = self.get_domain_name()
 
-        self.rp = urllib.robotparser.RobotFileParser(url='')
+        self.rp = robot.RobotFileParser(url='')
         self.rp.set_url(self.domain + "/robots.txt")
         self.rp.read()
 
