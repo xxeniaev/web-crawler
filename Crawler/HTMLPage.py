@@ -2,13 +2,14 @@ import os
 import re
 import urllib.request
 import settings
+import sys
+import logging
+import datetime
 
 from bs4 import BeautifulSoup
 
 
 class HTMLPage:
-    CONST = 2
-
     """Объект html страницы"""
     def __init__(self, url: str, nesting: int, domain, rp):
         self.url = url
@@ -23,11 +24,12 @@ class HTMLPage:
             return
         filename = self.get_file_name()
         if not os.path.exists(filename):
-            print(self.url, self.__nesting)
+            logging.basicConfig(level=logging.INFO)
+            logging.info(f"{datetime.datetime.now().strftime('%d/%m/%Y %H:%M:%S')} {self.url} {self.__nesting}")
             try:
                 urllib.request.urlretrieve(self.url, filename)
             except Exception:
-                print('bad url')
+                sys.stderr.write('url is broken\n')
         try:
             content = self.read_page(filename)
             links = self.get_links(content)
@@ -40,7 +42,7 @@ class HTMLPage:
                 else:
                     continue
         except FileNotFoundError:
-            print('it was bad url')
+            sys.stderr.write('url was broken\n')
 
     def get_file_name(self):
         return f"{self.url.replace('https://', '').replace('/', '_')}.html"

@@ -20,8 +20,11 @@ class WebCrawler:
         self.rp.read()
 
     def start(self):
-        os.mkdir(settings.DIR)
-        os.chdir(settings.DIR)
+        try:
+            os.mkdir(settings.DIR)
+            os.chdir(settings.DIR)
+        except FileExistsError:
+            os.chdir(settings.DIR)
 
         html_page = HTMLPage(self.start_url, 1, self.domain, self.rp)
         html_page.scrape()
