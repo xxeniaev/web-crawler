@@ -11,11 +11,11 @@ from bs4 import BeautifulSoup
 
 class HTMLPage:
     """Объект html страницы"""
-    def __init__(self, url: str, nesting: int, domain, rp):
+
+    def __init__(self, url: str, nesting: int, rp):
         self.url = url
         # вложенность
         self.__nesting = nesting
-        self.domain = domain
         self.rp = rp
 
     def scrape(self):
@@ -31,14 +31,15 @@ class HTMLPage:
             except Exception:
                 sys.stderr.write('url is broken\n')
         try:
-            content = self.read_page(filename)
-            links = self.get_links(content)
+            content = read_page(filename)
+            links = get_links(content)
             for link in links:
-                if self.domain in link:
-                    if self.rp.can_fetch("*", link):
-                        html_page = HTMLPage(link, self.__nesting + 1,
-                                             self.domain, self.rp)
-                        html_page.scrape()
+                # print('weird ', link)
+                domain = get_domain_name(link)
+                # print('ppp ', get_domain_name(link))
+                if domain in settings.DOMAINS and self.rp.can_fetch("*", link):
+                    html_page = HTMLPage(link, self.__nesting + 1, self.rp)
+                    html_page.scrape()
                 else:
                     continue
         except FileNotFoundError:
@@ -47,20 +48,29 @@ class HTMLPage:
     def get_file_name(self):
         return f"{self.url.replace('https://', '').replace('/', '_')}.html"
 
-    def read_page(self, path: str):
-        """Парсинг содержимого скачанной страницы"""
-        with open(path, "r", encoding="utf-8") as webpage:
-            source = webpage.read()
-            soup = BeautifulSoup(source, features="html.parser")
-        return soup
 
-    def get_links(self, content):
-        """Поиск всех ссылок на странице, заключенных в тег <href>."""
-        links = []
-        for link in content.find_all(
-                'a', attrs={"href": re.compile("https://")}):
-            links.append(link.get("href"))
-        for link in content.find_all(
-                'a', attrs={"href": re.compile("http://")}):
-            links.append(link.get("href"))
-        return links
+def read_page(path: str):
+    """Парсинг содержимого скачанной страницы"""
+    with open(path, "r", encoding="utf-8") as webpage:
+        source = webpage.read()
+        soup = BeautifulSoup(source, features="html.parser")
+    return soup
+
+
+def get_links(content):
+    """Поиск всех ссылок на странице, заключенных в тег <href>."""
+    links = []
+    for link in content.find_all(
+            'a', attrs={"href": re.compile("https://")}):
+        links.append(link.get("href"))
+    for link in content.find_all(
+            'a', attrs={"href": re.compile("http://")}):
+        links.append(link.get("href"))
+    return links
+
+
+def get_domain_name(url):
+    # print('weird ', url)
+    pattern = re.compile(r'(\w+://\w+\.\w+/)*')
+    # print(pattern.search(url))
+    return pattern.search(url).group()

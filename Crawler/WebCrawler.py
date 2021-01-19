@@ -26,7 +26,7 @@ class WebCrawler:
         except FileExistsError:
             os.chdir(settings.DIR)
 
-        html_page = HTMLPage(self.start_url, 1, self.domain, self.rp)
+        html_page = HTMLPage(self.start_url, 1, self.rp)
         html_page.scrape()
 
     def get_domain_name(self):
