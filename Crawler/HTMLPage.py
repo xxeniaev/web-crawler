@@ -7,7 +7,7 @@ import logging
 import datetime
 
 from bs4 import BeautifulSoup
-
+from queue import Queue
 
 class HTMLPage:
     """Объект html страницы"""
@@ -18,7 +18,7 @@ class HTMLPage:
         self.__nesting = nesting
         self.rp = rp
 
-    def scrape(self):
+    def scrape(self, query: Queue):
         """Основной меотод поиска ссылок."""
         if self.__nesting > settings.NESTING:
             return
@@ -39,7 +39,8 @@ class HTMLPage:
                 # print('ppp ', get_domain_name(link))
                 if domain in settings.DOMAINS and self.rp.can_fetch("*", link):
                     html_page = HTMLPage(link, self.__nesting + 1, self.rp)
-                    html_page.scrape()
+                    # html_page.scrape()
+                    query.put(html_page)
                 else:
                     continue
         except FileNotFoundError:
