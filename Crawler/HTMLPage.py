@@ -38,16 +38,18 @@ class HTMLPage:
             dict_of_rp = dict()
             for link in links:
                 domain = get_domain_name(link)
-                if domain in settings.DOMAINS:
-                    if domain not in dict_of_rp:
-                        rp = robot.RobotFileParser(url='')
-                        rp.set_url(domain + "/robots.txt")
-                        rp.read()
-                        dict_of_rp[domain] = rp
-                    cur_rp = dict_of_rp[domain]
-                    if cur_rp.can_fetch("*", link):
-                        html_page = HTMLPage(link, self.__nesting + 1)
-                        query.put(html_page)
+                zone = get_zone(domain)
+                if settings.DOMAINS is [] or domain in settings.DOMAINS:
+                    if settings.ZONES is [] or zone in settings.ZONES:
+                        if domain not in dict_of_rp:
+                            rp = robot.RobotFileParser(url='')
+                            rp.set_url(domain + "/robots.txt")
+                            rp.read()
+                            dict_of_rp[domain] = rp
+                        cur_rp = dict_of_rp[domain]
+                        if cur_rp.can_fetch("*", link):
+                            html_page = HTMLPage(link, self.__nesting + 1)
+                            query.put(html_page)
                 else:
                     continue
         except FileNotFoundError:
@@ -78,5 +80,10 @@ def get_links(content):
 
 
 def get_domain_name(url):
-    pattern = re.compile(r'(\w+://\w+\.\w+/)*')
+    pattern = re.compile(r'(\w+://.+?/)*')
     return pattern.search(url).group()
+
+
+def get_zone(domain):
+    pattern = re.compile(r'(?:http\w*://).*(\..*)(?=/)')
+    return pattern.search(domain).group(1)
