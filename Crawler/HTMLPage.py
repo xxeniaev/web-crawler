@@ -9,14 +9,16 @@ import datetime
 from bs4 import BeautifulSoup
 from queue import Queue
 
+import urllib.robotparser as robot
+
+
 class HTMLPage:
     """Объект html страницы"""
 
-    def __init__(self, url: str, nesting: int, rp):
+    def __init__(self, url: str, nesting: int):
         self.url = url
         # вложенность
         self.__nesting = nesting
-        self.rp = rp
 
     def scrape(self, query: Queue):
         """Основной меотод поиска ссылок."""
@@ -33,14 +35,19 @@ class HTMLPage:
         try:
             content = read_page(filename)
             links = get_links(content)
+            dict_of_rp = dict()
             for link in links:
-                # print('weird ', link)
                 domain = get_domain_name(link)
-                # print('ppp ', get_domain_name(link))
-                if domain in settings.DOMAINS and self.rp.can_fetch("*", link):
-                    html_page = HTMLPage(link, self.__nesting + 1, self.rp)
-                    # html_page.scrape()
-                    query.put(html_page)
+                if domain in settings.DOMAINS:
+                    if domain not in dict_of_rp:
+                        rp = robot.RobotFileParser(url='')
+                        rp.set_url(domain + "/robots.txt")
+                        rp.read()
+                        dict_of_rp[domain] = rp
+                    cur_rp = dict_of_rp[domain]
+                    if cur_rp.can_fetch("*", link):
+                        html_page = HTMLPage(link, self.__nesting + 1)
+                        query.put(html_page)
                 else:
                     continue
         except FileNotFoundError:
@@ -71,7 +78,5 @@ def get_links(content):
 
 
 def get_domain_name(url):
-    # print('weird ', url)
     pattern = re.compile(r'(\w+://\w+\.\w+/)*')
-    # print(pattern.search(url))
     return pattern.search(url).group()
