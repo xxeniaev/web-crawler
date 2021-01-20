@@ -33,12 +33,12 @@ class HTMLPage:
             except Exception:
                 sys.stderr.write('url is broken\n')
         try:
-            content = read_page(filename)
-            links = get_links(content)
+            content = self.read_page(filename)
+            links = self.get_links(content)
             dict_of_rp = dict()
             for link in links:
-                domain = get_domain_name(link)
-                zone = get_zone(domain)
+                domain = self.get_domain_name(link)
+                zone = self.get_zone(domain)
                 if settings.DOMAINS is [] or domain in settings.DOMAINS:
                     if settings.ZONES is [] or zone in settings.ZONES:
                         if domain not in dict_of_rp:
@@ -58,32 +58,28 @@ class HTMLPage:
     def get_file_name(self):
         return f"{self.url.replace('https://', '').replace('/', '_')}.html"
 
+    def read_page(self, path: str):
+        """Парсинг содержимого скачанной страницы"""
+        with open(path, "r", encoding="utf-8") as webpage:
+            source = webpage.read()
+            soup = BeautifulSoup(source, features="html.parser")
+        return soup
 
-def read_page(path: str):
-    """Парсинг содержимого скачанной страницы"""
-    with open(path, "r", encoding="utf-8") as webpage:
-        source = webpage.read()
-        soup = BeautifulSoup(source, features="html.parser")
-    return soup
+    def get_links(self, content):
+        """Поиск всех ссылок на странице, заключенных в тег <href>."""
+        links = []
+        for link in content.find_all(
+                'a', attrs={"href": re.compile("https://")}):
+            links.append(link.get("href"))
+        for link in content.find_all(
+                'a', attrs={"href": re.compile("http://")}):
+            links.append(link.get("href"))
+        return links
 
+    def get_domain_name(self, url):
+        pattern = re.compile(r'(\w+://.+?/)*')
+        return pattern.search(url).group()
 
-def get_links(content):
-    """Поиск всех ссылок на странице, заключенных в тег <href>."""
-    links = []
-    for link in content.find_all(
-            'a', attrs={"href": re.compile("https://")}):
-        links.append(link.get("href"))
-    for link in content.find_all(
-            'a', attrs={"href": re.compile("http://")}):
-        links.append(link.get("href"))
-    return links
-
-
-def get_domain_name(url):
-    pattern = re.compile(r'(\w+://.+?/)*')
-    return pattern.search(url).group()
-
-
-def get_zone(domain):
-    pattern = re.compile(r'(?:http\w*://).*(\..*)(?=/)')
-    return pattern.search(domain).group(1)
+    def get_zone(self, domain):
+        pattern = re.compile(r'(?:http\w*://).*(\..*)(?=/)')
+        return pattern.search(domain).group(1)

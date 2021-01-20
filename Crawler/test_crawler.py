@@ -1,20 +1,23 @@
 from .HTMLPage import HTMLPage
 
-import urllib.robotparser as urobot
-import urllib.request
+from queue import Queue
+
 import unittest
 import os
 
 
 class WebCrawlerTest(unittest.TestCase):
     def setUp(self):
-        self.rp = urllib.robotparser.RobotFileParser(url='')
-        self.rp.set_url("https://sitechecker.pro/robots.txt")
-        self.rp.read()
+        try:
+            os.mkdir('test_files')
+            os.chdir('test_files')
+        except FileExistsError:
+            os.chdir('test_files')
 
-        self.html_page = HTMLPage('https://sitechecker.pro/website-crawler/', 1,
-                             'https://sitechecker.pro/', self.rp)
-        self.html_page.scrape()
+        queue = Queue()
+
+        self.html_page = HTMLPage('https://sitechecker.pro/website-crawler/', 1)
+        self.html_page.scrape(queue)
 
     def test_get_file_name(self):
         filename = self.html_page.get_file_name()
@@ -39,3 +42,14 @@ class WebCrawlerTest(unittest.TestCase):
         filename = self.html_page.get_file_name()
 
         self.assertTrue(os.path.exists(filename))
+
+    def test_get_domain_name(self):
+        url = self.html_page.url
+
+        self.assertEqual(self.html_page.get_domain_name(url), 'https://sitechecker.pro/')
+
+    def test_get_zone(self):
+        url = self.html_page.url
+        domain = self.html_page.get_domain_name(url)
+
+        self.assertEqual(self.html_page.get_zone(domain), '.pro')

@@ -35,7 +35,7 @@ class WebCrawler:
 
         seconds = int(round(time.time()))
 
-        # Producer/consumer pattern
+        # producer/consumer pattern
         queue = Queue()
 
         # turn on the consumer thread
