@@ -9,14 +9,16 @@ import datetime
 from bs4 import BeautifulSoup
 from queue import Queue
 
+import urllib.robotparser as robot
+
+
 class HTMLPage:
     """Объект html страницы"""
 
-    def __init__(self, url: str, nesting: int, rp):
+    def __init__(self, url: str, nesting: int):
         self.url = url
         # вложенность
         self.__nesting = nesting
-        self.rp = rp
 
     def scrape(self, query: Queue):
         """Основной меотод поиска ссылок."""
@@ -31,16 +33,23 @@ class HTMLPage:
             except Exception:
                 sys.stderr.write('url is broken\n')
         try:
-            content = read_page(filename)
-            links = get_links(content)
+            content = self.read_page(filename)
+            links = self.get_links(content)
+            dict_of_rp = dict()
             for link in links:
-                # print('weird ', link)
-                domain = get_domain_name(link)
-                # print('ppp ', get_domain_name(link))
-                if domain in settings.DOMAINS and self.rp.can_fetch("*", link):
-                    html_page = HTMLPage(link, self.__nesting + 1, self.rp)
-                    # html_page.scrape()
-                    query.put(html_page)
+                domain = self.get_domain_name(link)
+                zone = self.get_zone(domain)
+                if settings.DOMAINS is [] or domain in settings.DOMAINS:
+                    if settings.ZONES is [] or zone in settings.ZONES:
+                        if domain not in dict_of_rp:
+                            rp = robot.RobotFileParser(url='')
+                            rp.set_url(domain + "/robots.txt")
+                            rp.read()
+                            dict_of_rp[domain] = rp
+                        cur_rp = dict_of_rp[domain]
+                        if cur_rp.can_fetch("*", link):
+                            html_page = HTMLPage(link, self.__nesting + 1)
+                            query.put(html_page)
                 else:
                     continue
         except FileNotFoundError:
@@ -49,29 +58,28 @@ class HTMLPage:
     def get_file_name(self):
         return f"{self.url.replace('https://', '').replace('/', '_')}.html"
 
+    def read_page(self, path: str):
+        """Парсинг содержимого скачанной страницы"""
+        with open(path, "r", encoding="utf-8") as webpage:
+            source = webpage.read()
+            soup = BeautifulSoup(source, features="html.parser")
+        return soup
 
-def read_page(path: str):
-    """Парсинг содержимого скачанной страницы"""
-    with open(path, "r", encoding="utf-8") as webpage:
-        source = webpage.read()
-        soup = BeautifulSoup(source, features="html.parser")
-    return soup
+    def get_links(self, content):
+        """Поиск всех ссылок на странице, заключенных в тег <href>."""
+        links = []
+        for link in content.find_all(
+                'a', attrs={"href": re.compile("https://")}):
+            links.append(link.get("href"))
+        for link in content.find_all(
+                'a', attrs={"href": re.compile("http://")}):
+            links.append(link.get("href"))
+        return links
 
+    def get_domain_name(self, url):
+        pattern = re.compile(r'(\w+://.+?/)*')
+        return pattern.search(url).group()
 
-def get_links(content):
-    """Поиск всех ссылок на странице, заключенных в тег <href>."""
-    links = []
-    for link in content.find_all(
-            'a', attrs={"href": re.compile("https://")}):
-        links.append(link.get("href"))
-    for link in content.find_all(
-            'a', attrs={"href": re.compile("http://")}):
-        links.append(link.get("href"))
-    return links
-
-
-def get_domain_name(url):
-    # print('weird ', url)
-    pattern = re.compile(r'(\w+://\w+\.\w+/)*')
-    # print(pattern.search(url))
-    return pattern.search(url).group()
+    def get_zone(self, domain):
+        pattern = re.compile(r'(?:http\w*://).*(\..*)(?=/)')
+        return pattern.search(domain).group(1)

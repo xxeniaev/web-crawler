@@ -6,7 +6,6 @@ import time
 from .ArgParser import ArgParser
 from .HTMLPage import HTMLPage
 
-import urllib.robotparser as robot
 import threading
 from queue import Queue
 
@@ -27,10 +26,6 @@ class WebCrawler:
         self.start_url = ArgParser().parse_args().start_url
         self.domain = self.get_domain_name()
 
-        self.rp = robot.RobotFileParser(url='')
-        self.rp.set_url(self.domain + "/robots.txt")
-        self.rp.read()
-
     def start(self):
         try:
             os.mkdir(settings.DIR)
@@ -40,16 +35,16 @@ class WebCrawler:
 
         seconds = int(round(time.time()))
 
-        # Producer/consumer pattern
+        # producer/consumer pattern
         queue = Queue()
 
-        # turn on the rotate_images thread
+        # turn on the consumer thread
         consumers = [threading.Thread(
-            target=consumer, args=(queue,), daemon=True) for _ in range(10)]
+            target=consumer, args=(queue,), daemon=True) for _ in range(settings.THREADS)]
         for consumer_item in consumers:
             consumer_item.start()
 
-        html_page = HTMLPage(self.start_url, 1, self.rp)
+        html_page = HTMLPage(self.start_url, 1)
         queue.put(html_page)
 
         # block until all tasks are done
